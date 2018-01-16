@@ -23,6 +23,33 @@ let drawingMode = 'rectangle';
 
 let colors;
 
+let narrator;
+
+function Narrator() {
+  this.force = '';
+
+  this.moveBlocks = (direction, velocity) => {
+    console.log(direction);
+    if (direction == left) {
+      blocks.forEach(block => {
+        block.velocity.x = -velocity;
+      });
+    } else if (direction == right) {
+      blocks.forEach(block => {
+        block.velocity.x = velocity;
+      });
+    } else if (direction == down) {
+      blocks.forEach(block => {
+        block.velocity.y = -velocity;
+      });
+    } else if (direction == up) {
+      blocks.forEach(block => {
+        block.velocity.y = velocity;
+      });
+    }
+  }
+}
+
 function mousePressed() {
   if (drawingMode == 'rectangle') {
     let mousePosition = createVector(mouseX, mouseY);
@@ -57,6 +84,8 @@ function mouseReleased() {
 
 function setup() {
 
+  narrator = new Narrator();
+
   colors = {
     red: color(120, 40, 40),
     green: color(40, 120, 50),
@@ -84,6 +113,7 @@ function setup() {
   blocks.push(new Block(1));
 }
 let as = true;
+
 function draw() {
   if (as) {
     background(23);
@@ -119,11 +149,7 @@ function parseResult() {
   // recognition system will often append words into phrases.
   // so hack here is to only use the last word:
   var mostrecentword = myRec.resultString.split(' ').pop();
-  if(mostrecentword.toLowerCase() == left) { dx=-1;dy=0; }
-  else if(mostrecentword.toLowerCase() == right) { dx=1;dy=0; }
-  else if(mostrecentword.toLowerCase() == up) { dx=0;dy=-1; }
-  else if(mostrecentword.toLowerCase() == down) { dx=0;dy=1; }
-  else if(mostrecentword.toLowerCase() == clear) { background(255); }
+  narrator.moveBlocks(mostrecentword.toLowerCase(), 2);
   // myRec.resultString = '';
   console.log(mostrecentword);
 }
@@ -160,7 +186,7 @@ function Block(density,
   }
 
   this.updatePosition = () => {
-    this.position.add(this.acceleration);
+    this.position.add(this.velocity);
   }
 
   this.draw = () => {
