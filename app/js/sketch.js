@@ -17,6 +17,8 @@ let block;
 let blocks = [];
 let carpenterBlock;
 
+let colliders = [];
+
 let iteration = 0;
 
 let drawingMode = 'rectangle';
@@ -32,22 +34,30 @@ function Narrator() {
     console.log(direction);
     if (direction == left) {
       blocks.forEach(block => {
+        block.velocity.y = 0;
         block.velocity.x = -velocity;
       });
     } else if (direction == right) {
       blocks.forEach(block => {
+        block.velocity.y = 0;
         block.velocity.x = velocity;
-      });
-    } else if (direction == down) {
-      blocks.forEach(block => {
-        block.velocity.y = -velocity;
       });
     } else if (direction == up) {
       blocks.forEach(block => {
+        block.velocity.x = 0;
+        block.velocity.y = -velocity;
+      });
+    } else if (direction == down) {
+      blocks.forEach(block => {
+        block.velocity.x = 0;
         block.velocity.y = velocity;
       });
     }
   }
+}
+
+function Carpenter() {
+
 }
 
 function mousePressed() {
@@ -110,7 +120,8 @@ function setup() {
   myRec.start(); // start engine
 
   // carpenterBlock = new Block(1);
-  blocks.push(new Block(1));
+  // blocks.push(new Block(1));
+  colliders.push(new Block(1));
 }
 let as = true;
 
@@ -118,29 +129,25 @@ function draw() {
   if (as) {
     background(23);
     fill(244);
-    text("draw: up, down, left, right, clear", 20, 20);
-    // y+=.5;
-    ellipse(x, y, 5, 5);
-    x+=dx;
-    y+=dy;
-    if(x<0) x = width;
-    if(y<0) y = height;
-    if(x>width) x = 0;
-    if(y>height) y = 0;
+    // text("draw: up, down, left, right, clear", 20, 20);
 
     if (carpenterBlock) {
       carpenterBlock.building(mouseX - pmouseX, mouseY - pmouseY);
       carpenterBlock.draw();
     }
 
-    blocks.forEach(block => {
-      block.applyForce(createVector(random(2), random(1000)));
-      block.updatePosition();
-      block.draw();
+    blocks.filter(block => !block.stable)
+      .forEach(block => {
+        block.applyForce(createVector(random(2), random(1000)));
+        block.updatePosition();
+        block.draw();
+        block.collisionDetection();
+      });
+
+    colliders.forEach(collider => {
+      collider.draw();
     });
-
     iteration++;
-
 
     as = true;
   }
@@ -161,8 +168,10 @@ function Block(density,
   position=createVector(
     random(0.8)*_windowWidth+0.1*_windowWidth,
     random(0.8)*_windowHeight+0.1*_windowHeight),
-  color = colors.red) {
+  color = colors.red,
+  stable = false) {
 
+  this.stable = stable;
   this.density = density;
   this.position = position;
   this.acceleration = createVector(0, 0);
@@ -196,6 +205,17 @@ function Block(density,
     strokeWeight(3);
     rect(this.position.x, this.position.y, this.width, this.height);
     pop();
+  }
+
+  this.collisionDetection = () => {
+    colliders.forEach(collider => {
+      if (this.position.x + this.width > collider.position.x
+      && this.position.x + this.width < collider.position.x + collider.width
+      && this.position.y + this.height > collider.position.y
+      && this.position.y + this.height < collider.position.y + collider.height ) {
+        console.log('kolizja');
+      }
+    });
   }
 
   // function
