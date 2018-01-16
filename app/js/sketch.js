@@ -6,12 +6,12 @@ const _windowWidth = window.innerWidth;
 const _windowHeight = window.innerHeight;
 let x, y;
 let dx, dy;
-let left = "lewo";
-let right = "prawo";
-let up = "góra";
-let down = "dół";
+let left = new Set(["lewo", "zlewo", "lewa", "lego"]);
+let right = new Set(["prawo", "rawo", "wrawo"]);
+let up = new Set(["góra", "tura"]);
+let down = new Set(["dół", "du", "do"]);
 let clear = "czyść";
-
+console.log(left);
 
 let block;
 let blocks = [];
@@ -32,26 +32,30 @@ function Narrator() {
 
   this.moveBlocks = (direction, velocity) => {
     console.log(direction);
-    if (direction == left) {
-      blocks.forEach(block => {
-        block.velocity.y = 0;
-        block.velocity.x = -velocity;
-      });
-    } else if (direction == right) {
-      blocks.forEach(block => {
-        block.velocity.y = 0;
-        block.velocity.x = velocity;
-      });
-    } else if (direction == up) {
-      blocks.forEach(block => {
-        block.velocity.x = 0;
-        block.velocity.y = -velocity;
-      });
-    } else if (direction == down) {
-      blocks.forEach(block => {
-        block.velocity.x = 0;
-        block.velocity.y = velocity;
-      });
+    if (left.has(direction)) {
+      blocks.filter(block => !block.stable)
+        .forEach(block => {
+          block.velocity.y = 0;
+          block.velocity.x = -velocity;
+        });
+    } else if (right.has(direction)) {
+      blocks.filter(block => !block.stable)
+        .forEach(block => {
+          block.velocity.y = 0;
+          block.velocity.x = velocity;
+        });
+    } else if (up.has(direction)) {
+      blocks.filter(block => !block.stable)
+        .forEach(block => {
+          block.velocity.x = 0;
+          block.velocity.y = -velocity;
+        });
+    } else if (down.has(direction)) {
+      blocks.filter(block => !block.stable)
+        .forEach(block => {
+          block.velocity.x = 0;
+          block.velocity.y = velocity;
+        });
     }
   }
 }
@@ -73,7 +77,7 @@ function mousePressed() {
 
 function mouseReleased() {
   if (drawingMode == 'rectangle') {
-    carpenterBlock.color = colors.red;
+    carpenterBlock.color = colors.orange;
     if (carpenterBlock.width < 0) {
       carpenterBlock.width = -1*carpenterBlock.width;
       carpenterBlock.position.x -= carpenterBlock.width;
@@ -100,8 +104,9 @@ function setup() {
     red: color(120, 40, 40),
     green: color(40, 120, 50),
     blue: color(50, 60, 140),
+    orange: color(150, 100, 0),
     transparent: color(0, 0, 0, 0),
-    white: color(230, 230, 230)
+    white: color(200, 200, 200)
   };
 
   // graphics stuff:
@@ -120,8 +125,11 @@ function setup() {
   myRec.start(); // start engine
 
   // carpenterBlock = new Block(1);
-  // blocks.push(new Block(1));
-  colliders.push(new Block(1));
+  blocks.push(new Block(1));
+  blocks[0].stable=true;
+  blocks[0].color=colors.white;
+  // colliders.push(new Block(1));
+
 }
 let as = true;
 
@@ -136,17 +144,22 @@ function draw() {
       carpenterBlock.draw();
     }
 
-    blocks.filter(block => !block.stable)
-      .forEach(block => {
-        block.applyForce(createVector(random(2), random(1000)));
-        block.updatePosition();
-        block.draw();
-        block.collisionDetection();
-      });
+    blocks.forEach(block => {
+      if (!block.stable) {
+        if (!block.collisionDetection()) {
+          block.applyForce(createVector(random(2), random(1000)));
+          block.updatePosition();
+        } else {
+          block.stable = true;
+        }
+      }
+      block.draw();
+    });
 
     colliders.forEach(collider => {
       collider.draw();
     });
+
     iteration++;
 
     as = true;
@@ -168,7 +181,7 @@ function Block(density,
   position=createVector(
     random(0.8)*_windowWidth+0.1*_windowWidth,
     random(0.8)*_windowHeight+0.1*_windowHeight),
-  color = colors.red,
+  color = colors.orange,
   stable = false) {
 
   this.stable = stable;
@@ -208,12 +221,38 @@ function Block(density,
   }
 
   this.collisionDetection = () => {
-    colliders.forEach(collider => {
-      if (this.position.x + this.width > collider.position.x
-      && this.position.x + this.width < collider.position.x + collider.width
-      && this.position.y + this.height > collider.position.y
-      && this.position.y + this.height < collider.position.y + collider.height ) {
-        console.log('kolizja');
+    blocks.filter(block => block.stable)
+    .forEach(collider => {
+      console.log(this.position.x + this.width >= collider.position.x
+        && this.position.x + this.width <= collider.position.x + collider.width)
+      if ((
+        this.position.x >= collider.position.x
+        && this.position.x <= collider.position.x + collider.width
+        && this.position.y >= collider.position.y
+        && this.position.y <= collider.position.y + collider.height
+      ) || (
+        this.position.x + this.width >= collider.position.x
+        && this.position.x + this.width <= collider.position.x + collider.width
+        && this.position.y >= collider.position.y
+        && this.position.y <= collider.position.y + collider.height
+      ) || (
+        this.position.x >= collider.position.x
+        && this.position.x <= collider.position.x + collider.width
+        && this.position.y + this.height >= collider.position.y
+        && this.position.y + this.height <= collider.position.y + collider.height
+      ) || (
+        this.position.x + this.width >= collider.position.x
+        && this.position.x + this.width <= collider.position.x + collider.width
+        && this.position.y + this.height >= collider.position.y
+        && this.position.y + this.height <= collider.position.y + collider.height
+      )
+    ) {
+        this.position.add(this.velocity);
+        this.stable = true;
+        this.color = colors.white;
+        return true;
+      } else {
+        return false;
       }
     });
   }
