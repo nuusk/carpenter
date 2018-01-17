@@ -4,34 +4,36 @@ myRec.interimResults = true;
 
 const _windowWidth = window.innerWidth;
 const _windowHeight = window.innerHeight;
-let x, y;
-let dx, dy;
+
+//these are the input values (the words you say to move objects on the screen)
 let left = new Set(["lewo", "zlewo", "lewa", "lego"]);
 let right = new Set(["prawo", "rawo", "wrawo"]);
 let up = new Set(["góra", "tura"]);
 let down = new Set(["dół", "du", "do"]);
-let clear = "czyść";
-console.log(left);
+let next = new Set(["następne", "następna", "następnie", "następny"]);
 
-let block;
+//array of blocks that are the main objects on the scene
 let blocks = [];
+//object that is currently being built by the carpenter
 let carpenterBlock;
 
-let colliders = [];
+//current frame
+let frame = 0;
 
-let iteration = 0;
-
-let drawingMode = 'rectangle';
-
+//array of available colors
 let colors;
 
+//players
+let carpenter;
 let narrator;
 
-function Narrator() {
-  this.force = '';
+//player one - narrator
+//he is the one that stimulates the scene by speaking
+function Narrator(name) {
+  this.name = name;
 
+  //function used to move blocks with voice
   this.moveBlocks = (direction, velocity) => {
-    console.log(direction);
     if (left.has(direction)) {
       blocks.filter(block => !block.stable)
         .forEach(block => {
@@ -60,23 +62,39 @@ function Narrator() {
   }
 }
 
-function Carpenter() {
+//player two - carpenter
+//he is the one that stimulates the scene by drawing
+function Carpenter(name) {
+  this.name = name;
+  this.drawingMode = 'rectangle';
 
+  this.sketch = () => {
+    if (this.drawingMode == 'rectangle') {
+      let mousePosition = createVector(mouseX, mouseY);
+      carpenterBlock = new Block(1, 0, 0, mousePosition, colors.transparent);
+    }
+  }
 }
 
 function mousePressed() {
-  if (drawingMode == 'rectangle') {
-    let mousePosition = createVector(mouseX, mouseY);
-    carpenterBlock = new Block(1, 0, 0, mousePosition, colors.transparent);
+  carpenter.sketch();
+}
+
+function getRandomColor() {
+  //all colors excluding white and transparent from the colors array
+  let size = Object.keys(colors).length - 2;
+  let index = floor(random(size));
+  let count = 0;
+  for (randomColor in colors) {
+    if (count == index) {
+      return colors[randomColor];
+    }
+    count++;
   }
-  //density
-  //width = random(100)+100, height = random(100)+100
-  //position=createVector(random(0.8)*_windowWidth+0.1*_windowWidth, random(0.8)*_windowHeight+0.1*_windowHeight)
-  // blocks.push(new Block(iteration % 360, 200, 100, position=createVector(mouseX, mouseY)));
 }
 
 function mouseReleased() {
-  if (drawingMode == 'rectangle') {
+  if (carpenter.drawingMode == 'rectangle') {
     carpenterBlock.color = colors.orange;
     if (carpenterBlock.width < 0) {
       carpenterBlock.width = -1*carpenterBlock.width;
@@ -86,11 +104,15 @@ function mouseReleased() {
       carpenterBlock.height = -1*carpenterBlock.height;
       carpenterBlock.position.y -= carpenterBlock.height;
     }
+
+    getRandomColor();
+
     blocks.push(new Block(
       carpenterBlock.density,
       carpenterBlock.width,
       carpenterBlock.height,
-      carpenterBlock.position
+      carpenterBlock.position,
+      getRandomColor()
     ));
     carpenterBlock = null;
   }
@@ -98,13 +120,18 @@ function mouseReleased() {
 
 function setup() {
 
-  narrator = new Narrator();
+  narrator = new Narrator('rabal');
+  carpenter = new Carpenter('poe');
 
   colors = {
-    red: color(120, 40, 40),
-    green: color(40, 120, 50),
-    blue: color(50, 60, 140),
-    orange: color(150, 100, 0),
+    red: color(211, 76, 61),
+    green: color(47, 183, 70),
+    blue: color(53, 109, 198),
+    orange: color(239, 150, 33),
+    yellow: color(242, 242, 75),
+    seledin: color(87, 214, 176),
+    violet: color(136, 97, 181),
+    pink: color(242, 140, 225),
     transparent: color(0, 0, 0, 0),
     white: color(200, 200, 200)
   };
@@ -128,7 +155,6 @@ function setup() {
   blocks.push(new Block(1));
   blocks[0].stable=true;
   blocks[0].color=colors.white;
-  // colliders.push(new Block(1));
 
 }
 let as = true;
@@ -156,11 +182,7 @@ function draw() {
       block.draw();
     });
 
-    colliders.forEach(collider => {
-      collider.draw();
-    });
-
-    iteration++;
+    frame++;
 
     as = true;
   }
@@ -170,7 +192,6 @@ function parseResult() {
   // so hack here is to only use the last word:
   var mostrecentword = myRec.resultString.split(' ').pop();
   narrator.moveBlocks(mostrecentword.toLowerCase(), 2);
-  // myRec.resultString = '';
   console.log(mostrecentword);
 }
 
@@ -223,8 +244,6 @@ function Block(density,
   this.collisionDetection = () => {
     blocks.filter(block => block.stable)
     .forEach(collider => {
-      console.log(this.position.x + this.width >= collider.position.x
-        && this.position.x + this.width <= collider.position.x + collider.width)
       if ((
         this.position.x >= collider.position.x
         && this.position.x <= collider.position.x + collider.width
