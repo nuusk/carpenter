@@ -4,13 +4,8 @@ myRec.interimResults = true;
 
 const _windowWidth = window.innerWidth;
 const _windowHeight = window.innerHeight;
+const backgroundColor = 23;
 
-//these are the input values (the words you say to move objects on the screen)
-let left = new Set(["lewo", "zlewo", "lewa", "lego"]);
-let right = new Set(["prawo", "rawo", "wrawo"]);
-let up = new Set(["góra", "tura"]);
-let down = new Set(["dół", "du", "do"]);
-let next = new Set(["następne", "następna", "następnie", "następny"]);
 
 //array of blocks that are the main objects on the scene
 let blocks = [];
@@ -27,38 +22,53 @@ let colors;
 let carpenter;
 let narrator;
 
+//stages
+let stages = [];
+
+let gravity;
+
 //player one - narrator
 //he is the one that stimulates the scene by speaking
 function Narrator(name) {
   this.name = name;
+  this.force = 2;
 
   //function used to move blocks with voice
-  this.moveBlocks = (direction, velocity) => {
-    if (left.has(direction)) {
+  this.moveBlocks = (command) => {
+    if (this.commands.left.has(command)) {
       blocks.filter(block => !block.stable)
         .forEach(block => {
           block.velocity.y = 0;
-          block.velocity.x = -velocity;
+          block.velocity.x = -this.force;
         });
-    } else if (right.has(direction)) {
+    } else if (this.commands.right.has(command)) {
       blocks.filter(block => !block.stable)
         .forEach(block => {
           block.velocity.y = 0;
-          block.velocity.x = velocity;
+          block.velocity.x = this.force;
         });
-    } else if (up.has(direction)) {
+    } else if (this.commands.up.has(command)) {
       blocks.filter(block => !block.stable)
         .forEach(block => {
           block.velocity.x = 0;
-          block.velocity.y = -velocity;
+          block.velocity.y = -this.force;
         });
-    } else if (down.has(direction)) {
+    } else if (this.commands.down.has(command)) {
       blocks.filter(block => !block.stable)
         .forEach(block => {
           block.velocity.x = 0;
-          block.velocity.y = velocity;
+          block.velocity.y = this.force;
         });
     }
+  }
+
+  //these are the input values (the words you say to move objects on the screen)
+  this.commands = {
+    left: new Set(["lewo", "zlewo", "lewa", "lego"]),
+    right: new Set(["prawo", "rawo", "wrawo"]),
+    up: new Set(["góra", "tura"]),
+    down: new Set(["dół", "du", "do"]),
+    next: new Set(["następne", "następna", "następnie", "następny"])
   }
 }
 
@@ -68,16 +78,45 @@ function Carpenter(name) {
   this.name = name;
   this.drawingMode = 'rectangle';
 
+  this.sketchingTimer = 1000
+  this.canSketch = true;
+
+  //carpenter building objects
   this.sketch = () => {
     if (this.drawingMode == 'rectangle') {
       let mousePosition = createVector(mouseX, mouseY);
       carpenterBlock = new Block(1, 0, 0, mousePosition, colors.transparent);
     }
   }
-}
 
-function mousePressed() {
-  carpenter.sketch();
+  //finalize the sketch. time to build object
+  this.build = () => {
+    if (this.drawingMode == 'rectangle') {
+      if (carpenterBlock.width < 0) {
+        carpenterBlock.width = -1*carpenterBlock.width;
+        carpenterBlock.position.x -= carpenterBlock.width;
+      }
+      if (carpenterBlock.height < 0) {
+        carpenterBlock.height = -1*carpenterBlock.height;
+        carpenterBlock.position.y -= carpenterBlock.height;
+      }
+      carpenterBlock.stable = false;
+      //push the carpenter block to the standard blocks array
+      blocks.push(new Block(
+        carpenterBlock.density,
+        carpenterBlock.width,
+        carpenterBlock.height,
+        carpenterBlock.position,
+        getRandomColor()
+      ));
+      carpenterBlock = null;
+    }
+    console.log(blocks[blocks.length-1].stable);
+    this.canSketch = false;
+    setTimeout(()=>{
+      this.canSketch = true;
+    }, this.sketchingTimer);
+  }
 }
 
 function getRandomColor() {
@@ -93,36 +132,28 @@ function getRandomColor() {
   }
 }
 
+function mousePressed() {
+  //carpenter start sketching
+  if(carpenter.canSketch) {
+    carpenter.sketch();
+  }
+}
+
 function mouseReleased() {
-  if (carpenter.drawingMode == 'rectangle') {
-    carpenterBlock.color = colors.orange;
-    if (carpenterBlock.width < 0) {
-      carpenterBlock.width = -1*carpenterBlock.width;
-      carpenterBlock.position.x -= carpenterBlock.width;
-    }
-    if (carpenterBlock.height < 0) {
-      carpenterBlock.height = -1*carpenterBlock.height;
-      carpenterBlock.position.y -= carpenterBlock.height;
-    }
-
-    getRandomColor();
-
-    blocks.push(new Block(
-      carpenterBlock.density,
-      carpenterBlock.width,
-      carpenterBlock.height,
-      carpenterBlock.position,
-      getRandomColor()
-    ));
-    carpenterBlock = null;
+  //carpenter finishes sketch and builds the object
+  if(carpenter.canSketch) {
+    carpenter.build();
   }
 }
 
 function setup() {
 
+
+  //create players
   narrator = new Narrator('rabal');
   carpenter = new Carpenter('poe');
 
+  //all available colors
   colors = {
     red: color(211, 76, 61),
     green: color(47, 183, 70),
@@ -136,55 +167,49 @@ function setup() {
     white: color(200, 200, 200)
   };
 
-  // graphics stuff:
   createCanvas(_windowWidth, _windowHeight);
-  background(255, 255, 255);
-  fill(0, 0, 0, 255);
-  x = width/2;
-  y = height/2;
-  dx = 0;
-  dy = 0;
-  // instructions:
-  textSize(20);
-  textAlign(LEFT);
+  background(backgroundColor);
 
-  myRec.onResult = parseResult; // now in the constructor
-  myRec.start(); // start engine
+  //whenever the engine hears the voice, parse the result
+  myRec.onResult = parseResult;
+  myRec.start(); //start engine
 
-  // carpenterBlock = new Block(1);
+  // stages[0] = new Array();
+  // stages[0].push(new Block(1));
+  // stages[0][0].stable=true;
   blocks.push(new Block(1));
   blocks[0].stable=true;
   blocks[0].color=colors.white;
-
 }
-let as = true;
-
+let pause = false;
 function draw() {
-  if (as) {
-    background(23);
-    fill(244);
-    // text("draw: up, down, left, right, clear", 20, 20);
+  if (!pause) {
+    background(backgroundColor);
+    fill(colors.white);
+    text("góra, dół, lewo, prawo", 20, 20);
+    if (!carpenter.canSketch) {
+      text("sketching cooldown", 20, 40);
+    }
 
+    //if carpenter is sketching
     if (carpenterBlock) {
-      carpenterBlock.building(mouseX - pmouseX, mouseY - pmouseY);
+      //draw the carpenter block
+      carpenterBlock.sketching(mouseX - pmouseX, mouseY - pmouseY);
       carpenterBlock.draw();
     }
 
     blocks.forEach(block => {
       if (!block.stable) {
-        if (!block.collisionDetection()) {
-          block.applyForce(createVector(random(2), random(1000)));
+        if(!block.collisionDetection()) {
+          block.resetAcceleration();
+          block.applyForce(createVector(0, 1000));
+          block.updateVelocity();
           block.updatePosition();
-        } else {
-          block.stable = true;
         }
       }
       block.draw();
     });
-
     frame++;
-
-    as = true;
   }
 }
 function parseResult() {
@@ -205,6 +230,7 @@ function Block(density,
   color = colors.orange,
   stable = false) {
 
+  //if stable is true, the narrator doesn't have control over it
   this.stable = stable;
   this.density = density;
   this.position = position;
@@ -215,17 +241,22 @@ function Block(density,
   this.mass = this.width * this.height * this.density;
   this.color = color;
 
-  this.building = (xOffset, yOffset) => {
-    // this.position.x = mouseX;
-    // this.position.y = mouseY;
+  //when carpenter is currently sketching the block
+  this.sketching = (xOffset, yOffset) => {
     this.width += xOffset;
     this.height += yOffset;
-    // this.position.x = mouseX + this.width;
-    // this.position.y = mouseY + this.height;
+  }
+
+  this.resetAcceleration = () => {
+    this.acceleration.mult(0);
   }
 
   this.applyForce = (force) => {
-    this.acceleration.add(force.div(this.mass)) ;
+    this.acceleration.add(force.div(this.mass));
+  }
+
+  this.updateVelocity = () => {
+    this.velocity.add(this.acceleration);
   }
 
   this.updatePosition = () => {
@@ -244,37 +275,17 @@ function Block(density,
   this.collisionDetection = () => {
     blocks.filter(block => block.stable)
     .forEach(collider => {
-      if ((
-        this.position.x >= collider.position.x
-        && this.position.x <= collider.position.x + collider.width
-        && this.position.y >= collider.position.y
-        && this.position.y <= collider.position.y + collider.height
-      ) || (
+      if (
         this.position.x + this.width >= collider.position.x
-        && this.position.x + this.width <= collider.position.x + collider.width
-        && this.position.y >= collider.position.y
-        && this.position.y <= collider.position.y + collider.height
-      ) || (
-        this.position.x >= collider.position.x
         && this.position.x <= collider.position.x + collider.width
-        && this.position.y + this.height >= collider.position.y
-        && this.position.y + this.height <= collider.position.y + collider.height
-      ) || (
-        this.position.x + this.width >= collider.position.x
-        && this.position.x + this.width <= collider.position.x + collider.width
-        && this.position.y + this.height >= collider.position.y
-        && this.position.y + this.height <= collider.position.y + collider.height
-      )
-    ) {
-        this.position.add(this.velocity);
+        && this.position.y +this.height >= collider.position.y
+        && this.position.y <= collider.position.y + collider.height
+      ) {
+        console.log('kolizja');
         this.stable = true;
         this.color = colors.white;
         return true;
-      } else {
-        return false;
       }
     });
   }
-
-  // function
 }
