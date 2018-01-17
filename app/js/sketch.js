@@ -202,7 +202,7 @@ function draw() {
       if (!block.stable) {
         if(!block.collisionDetection()) {
           block.resetAcceleration();
-          block.applyForce(createVector(0, 1000));
+          block.applyForce(createVector(0, 500));
           block.updateVelocity();
           block.updatePosition();
         }
@@ -238,7 +238,8 @@ function Block(density,
   this.velocity = createVector(0, 0);
   this.width = width;
   this.height = height;
-  this.mass = this.width * this.height * this.density;
+  // this.mass = this.width * this.height * this.density;
+  this.mass = 10000;
   this.color = color;
 
   //when carpenter is currently sketching the block
