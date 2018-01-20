@@ -81,6 +81,21 @@ function Carpenter(name) {
   this.sketchingTimer = 1000
   this.canSketch = true;
 
+  this.minSketchSize = 1000;
+  this.maxSketchSize = 40000;
+  this.maxWidth = 300;
+  this.maxHeight = 300;
+  this.isRightSize = () => {
+    let size = Math.abs(carpenterBlock.width) * Math.abs(carpenterBlock.height);
+    if (size >= this.minSketchSize && size <= this.maxSketchSize && Math.abs(carpenterBlock.width) <= this.maxWidth && Math.abs(carpenterBlock.height) <= this.maxHeight) {
+      console.log(size);
+      return true;
+    } else {
+      console.log(size);
+      return false;
+    }
+  }
+
   //carpenter building objects
   this.sketch = () => {
     if (this.drawingMode == 'rectangle') {
@@ -92,26 +107,31 @@ function Carpenter(name) {
   //finalize the sketch. time to build object
   this.build = () => {
     if (this.drawingMode == 'rectangle') {
-      if (carpenterBlock.width < 0) {
-        carpenterBlock.width = -1*carpenterBlock.width;
-        carpenterBlock.position.x -= carpenterBlock.width;
+      if (this.isRightSize()) {
+        if (carpenterBlock.width < 0) {
+          carpenterBlock.width = -1*carpenterBlock.width;
+          carpenterBlock.position.x -= carpenterBlock.width;
+        }
+        if (carpenterBlock.height < 0) {
+          carpenterBlock.height = -1*carpenterBlock.height;
+          carpenterBlock.position.y -= carpenterBlock.height;
+        }
+        carpenterBlock.stable = false;
+        //push the carpenter block to the standard blocks array
+        blocks.push(new Block(
+          carpenterBlock.density,
+          carpenterBlock.width,
+          carpenterBlock.height,
+          carpenterBlock.position,
+          getRandomColor()
+        ));
+        carpenterBlock = null;
+      } else {
+        carpenterBlock = null;
+        return;
       }
-      if (carpenterBlock.height < 0) {
-        carpenterBlock.height = -1*carpenterBlock.height;
-        carpenterBlock.position.y -= carpenterBlock.height;
-      }
-      carpenterBlock.stable = false;
-      //push the carpenter block to the standard blocks array
-      blocks.push(new Block(
-        carpenterBlock.density,
-        carpenterBlock.width,
-        carpenterBlock.height,
-        carpenterBlock.position,
-        getRandomColor()
-      ));
-      carpenterBlock = null;
     }
-    console.log(blocks[blocks.length-1].stable);
+
     this.canSketch = false;
     setTimeout(()=>{
       this.canSketch = true;
@@ -182,6 +202,7 @@ function setup() {
   blocks[0].color=colors.white;
 }
 let pause = false;
+
 function draw() {
   if (!pause) {
     background(backgroundColor);
@@ -195,6 +216,13 @@ function draw() {
     if (carpenterBlock) {
       //draw the carpenter block
       carpenterBlock.sketching(mouseX - pmouseX, mouseY - pmouseY);
+      if (!carpenter.isRightSize()) {
+        console.log('wrong');
+        carpenterBlock.color = color(255, 50, 80, 100);
+      } else {
+        console.log('right');
+        carpenterBlock.color = colors.transparent;
+      }
       carpenterBlock.draw();
     }
 
@@ -202,7 +230,7 @@ function draw() {
       if (!block.stable) {
         if(!block.collisionDetection()) {
           block.resetAcceleration();
-          block.applyForce(createVector(0, 500));
+          block.applyForce(createVector(0, 150));
           block.updateVelocity();
           block.updatePosition();
         }
