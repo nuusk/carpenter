@@ -24,6 +24,7 @@ let narrator;
 
 //stages
 let stages = [];
+let stageNumber = 0;
 
 let gravity;
 
@@ -167,8 +168,6 @@ function mouseReleased() {
 }
 
 function setup() {
-
-
   //create players
   narrator = new Narrator('rabal');
   carpenter = new Carpenter('poe');
@@ -194,13 +193,41 @@ function setup() {
   myRec.onResult = parseResult;
   myRec.start(); //start engine
 
-  // stages[0] = new Array();
-  // stages[0].push(new Block(1));
-  // stages[0][0].stable=true;
-  blocks.push(new Block(1));
-  blocks[0].stable=true;
-  blocks[0].color=colors.white;
+
+
+  stages[0] = new Array();
+  initStage();
+  // blocks.push(new Block(1));
+  // blocks[0].stable=true;
+  // blocks[0].color=colors.white;
 }
+
+function initStage() {
+  stages[0].push(new Block( 1, _windowWidth, _windowHeight*0.1, createVector(0, _windowHeight*0.9), colors.white, true ));
+  stages[0].push(new Block( 1, _windowWidth*0.05, _windowHeight*0.5, createVector(0, _windowHeight*0.5), colors.white, true ));
+  stages[0].push(new Block( 1, _windowWidth*0.3, _windowHeight*0.05, createVector(0, _windowHeight*0.5), colors.white, true ));
+  stages[0].push(new Block( 1, _windowWidth*0.025, _windowHeight*0.25, createVector(0, _windowHeight*0.25), colors.white, true ));
+  stages[0].push(new Block( 1, _windowWidth*0.2, _windowHeight*0.025, createVector(0, _windowHeight*0.25), colors.white, true ));
+  stages[0].push(new Block( 1, _windowWidth*0.25, _windowHeight*0.5, createVector(_windowWidth*0.5, _windowHeight*0.8), colors.white, true ));
+
+  //
+  // stages[0].forEach(block => {
+  //   block.stable = true;
+  //   block.color = colors.white;
+  // });
+
+}
+// }
+// density,
+//   width = random(100)+100,
+//   height = random(100)+100,
+//   position=createVector(
+//     random(0.8)*_windowWidth+0.1*_windowWidth,
+//     random(0.8)*_windowHeight+0.1*_windowHeight),
+//   color = colors.orange,
+//   stable = false) {
+
+
 let pause = false;
 
 function draw() {
@@ -237,6 +264,11 @@ function draw() {
       }
       block.draw();
     });
+
+    stages[stageNumber].forEach(block => {
+      block.draw();
+    })
+
     frame++;
   }
 }
@@ -301,8 +333,10 @@ function Block(density,
     pop();
   }
 
+  //detect collision between all stable blocks (including those drawn by carpenter as well as those in the stage from the beginning)
   this.collisionDetection = () => {
-    blocks.filter(block => block.stable)
+    blocks.concat(stages[stageNumber])
+    .filter(block => block.stable)
     .forEach(collider => {
       if (
         this.position.x + this.width >= collider.position.x
