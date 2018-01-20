@@ -227,8 +227,6 @@ function initStage() {
   stages[0].push(new Block( 1, _windowWidth, _windowHeight*0.1, createVector(0, _windowHeight*0.9), colors.white, true ));
   stages[0].push(new Block( 1, _windowWidth*0.05, _windowHeight*0.5, createVector(0, _windowHeight*0.5), colors.white, true ));
   stages[0].push(new Block( 1, _windowWidth*0.3, _windowHeight*0.05, createVector(0, _windowHeight*0.5), colors.white, true ));
-  stages[0].push(new Block( 1, _windowWidth*0.025, _windowHeight*0.25, createVector(0, _windowHeight*0.25), colors.white, true ));
-  stages[0].push(new Block( 1, _windowWidth*0.2, _windowHeight*0.025, createVector(0, _windowHeight*0.25), colors.white, true ));
   stages[0].push(new Block( 1, _windowWidth*0.25, _windowHeight*0.5, createVector(_windowWidth*0.5, _windowHeight*0.8 ), colors.white, true ));
 
   //
@@ -256,9 +254,11 @@ function draw() {
   if (!pause) {
     background(backgroundColor);
     fill(colors.white);
-    text("\"h\" lub \"pomoc\" - tutorial", 20, 20);
+    textAlign(RIGHT);
+    text("\"h\" lub \"pomoc\" - tutorial", _windowWidth*0.98, 20);
+    textAlign(LEFT);
     if (!carpenter.canSketch) {
-      text("sketching cooldown", 20, 40);
+      text("sketching cooldown", 10, 20);
     }
 
     //if carpenter is sketching
@@ -310,12 +310,14 @@ function draw() {
     text('NARRATOR', _windowWidth*0.75, _windowHeight*0.1);
     textSize(30);
     text('STEROWANIE:', _windowWidth*0.25, _windowHeight*0.2);
-    text('STEROWANIE GŁOSEM:', _windowWidth*0.75, _windowHeight*0.2);
+    text('KOMENDY GŁOSOWE:', _windowWidth*0.75, _windowHeight*0.2);
     textSize(20);
     text('naciśnij LPM - szkicowanie', _windowWidth*0.25, _windowHeight*0.3);
     text('puść LPM - budowanie', _windowWidth*0.25, _windowHeight*0.35);
     text('spacja - pauza', _windowWidth*0.25, _windowHeight*0.4);
     text('h - pomoc', _windowWidth*0.25, _windowHeight*0.45);
+    text('1 - rysowanie bloczków', _windowWidth*0.25, _windowHeight*0.5);
+    text('2 - rysowanie kul', _windowWidth*0.25, _windowHeight*0.55);
 
 
     text('lewo, prawo, góra, dół - pchnięcie bloczka', _windowWidth*0.75, _windowHeight*0.3);
