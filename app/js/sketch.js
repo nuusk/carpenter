@@ -35,7 +35,7 @@ function Narrator(name) {
   this.force = 2;
 
   //function used to move blocks with voice
-  this.moveBlocks = (command) => {
+  this.processInput = (command) => {
     if (this.commands.left.has(command)) {
       blocks.filter(block => !block.stable)
         .forEach(block => {
@@ -60,6 +60,10 @@ function Narrator(name) {
           block.velocity.x = 0;
           block.velocity.y = this.force;
         });
+    } else if (this.commands.pause.has(command)) {
+      pause = true;
+    } else if (this.commands.resume.has(command)) {
+      pause = false;
     }
   }
 
@@ -69,7 +73,9 @@ function Narrator(name) {
     right: new Set(["prawo", "rawo", "wrawo"]),
     up: new Set(["góra", "tura"]),
     down: new Set(["dół", "du", "do"]),
-    next: new Set(["następne", "następna", "następnie", "następny"])
+    next: new Set(["następne", "następna", "następnie", "następny"]),
+    pause: new Set(["pauza", "pauzuj"]),
+    resume: new Set(["wznów", "graj", "start"])
   }
 }
 
@@ -89,10 +95,8 @@ function Carpenter(name) {
   this.isRightSize = () => {
     let size = Math.abs(carpenterBlock.width) * Math.abs(carpenterBlock.height);
     if (size >= this.minSketchSize && size <= this.maxSketchSize && Math.abs(carpenterBlock.width) <= this.maxWidth && Math.abs(carpenterBlock.height) <= this.maxHeight) {
-      console.log(size);
       return true;
     } else {
-      console.log(size);
       return false;
     }
   }
@@ -138,6 +142,18 @@ function Carpenter(name) {
       this.canSketch = true;
     }, this.sketchingTimer);
   }
+
+  this.keyboardInput = () => {
+    if (keyCode === 32) {
+      pause = !pause;
+    } else if (keyCode === RIGHT_ARROW) {
+      value = 0;
+    }
+  }
+}
+
+function keyPressed() {
+  carpenter.keyboardInput();
 }
 
 function getRandomColor() {
@@ -208,7 +224,7 @@ function initStage() {
   stages[0].push(new Block( 1, _windowWidth*0.3, _windowHeight*0.05, createVector(0, _windowHeight*0.5), colors.white, true ));
   stages[0].push(new Block( 1, _windowWidth*0.025, _windowHeight*0.25, createVector(0, _windowHeight*0.25), colors.white, true ));
   stages[0].push(new Block( 1, _windowWidth*0.2, _windowHeight*0.025, createVector(0, _windowHeight*0.25), colors.white, true ));
-  stages[0].push(new Block( 1, _windowWidth*0.25, _windowHeight*0.5, createVector(_windowWidth*0.5, _windowHeight*0.8), colors.white, true ));
+  stages[0].push(new Block( 1, _windowWidth*0.25, _windowHeight*0.5, createVector(_windowWidth*0.5, _windowHeight*0.8 ), colors.white, true ));
 
   //
   // stages[0].forEach(block => {
@@ -244,10 +260,8 @@ function draw() {
       //draw the carpenter block
       carpenterBlock.sketching(mouseX - pmouseX, mouseY - pmouseY);
       if (!carpenter.isRightSize()) {
-        console.log('wrong');
         carpenterBlock.color = color(255, 50, 80, 100);
       } else {
-        console.log('right');
         carpenterBlock.color = colors.transparent;
       }
       carpenterBlock.draw();
@@ -270,13 +284,22 @@ function draw() {
     })
 
     frame++;
+  } else if (pause) {
+    push();
+    textAlign(CENTER);
+    fill(color(140+70*Math.sin(0.005*millis())));
+    textSize(200);
+    text('PAUZA', _windowWidth*0.5, _windowHeight*0.5+50);
+    textSize(46);
+    text('naciśnij spację  /  powiedz graj', _windowWidth*0.5, _windowHeight*0.5+100);
+    pop();
   }
 }
 function parseResult() {
   // recognition system will often append words into phrases.
   // so hack here is to only use the last word:
   var mostrecentword = myRec.resultString.split(' ').pop();
-  narrator.moveBlocks(mostrecentword.toLowerCase(), 2);
+  narrator.processInput(mostrecentword.toLowerCase(), 2);
   console.log(mostrecentword);
 }
 
@@ -344,7 +367,6 @@ function Block(density,
         && this.position.y +this.height >= collider.position.y
         && this.position.y <= collider.position.y + collider.height
       ) {
-        console.log('kolizja');
         this.stable = true;
         this.color = colors.white;
         return true;
