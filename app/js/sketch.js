@@ -64,6 +64,9 @@ function Narrator(name) {
       pause = true;
     } else if (this.commands.resume.has(command)) {
       pause = false;
+      help = false;
+    } else if (this.commands.help.has(command)) {
+      help = true;
     }
   }
 
@@ -75,7 +78,8 @@ function Narrator(name) {
     down: new Set(["dół", "du", "do"]),
     next: new Set(["następne", "następna", "następnie", "następny"]),
     pause: new Set(["pauza", "pauzuj"]),
-    resume: new Set(["wznów", "graj", "start"])
+    resume: new Set(["wznów", "graj", "start"]),
+    help: new Set(["pomóż", "pomoc", "pomocy", "pomożesz"])
   }
 }
 
@@ -144,10 +148,11 @@ function Carpenter(name) {
   }
 
   this.keyboardInput = () => {
+    //pause
     if (keyCode === 32) {
       pause = !pause;
-    } else if (keyCode === RIGHT_ARROW) {
-      value = 0;
+    } else if (keyCode === 104 || keyCode === 72) {
+      help = !help;
     }
   }
 }
@@ -245,12 +250,13 @@ function initStage() {
 
 
 let pause = false;
+let help = false;
 
 function draw() {
   if (!pause) {
     background(backgroundColor);
     fill(colors.white);
-    text("góra, dół, lewo, prawo", 20, 20);
+    text("\"h\" lub \"pomoc\" - tutorial", 20, 20);
     if (!carpenter.canSketch) {
       text("sketching cooldown", 20, 40);
     }
@@ -292,6 +298,32 @@ function draw() {
     text('PAUZA', _windowWidth*0.5, _windowHeight*0.5+50);
     textSize(46);
     text('naciśnij spację  /  powiedz graj', _windowWidth*0.5, _windowHeight*0.5+100);
+    pop();
+  }
+  if (help) {
+    push();
+    background(backgroundColor);
+    textAlign(CENTER);
+    fill(240, 240, 240);
+    textSize(50);
+    text('CARPENTER', _windowWidth*0.25, _windowHeight*0.1);
+    text('NARRATOR', _windowWidth*0.75, _windowHeight*0.1);
+    textSize(30);
+    text('STEROWANIE:', _windowWidth*0.25, _windowHeight*0.2);
+    text('STEROWANIE GŁOSEM:', _windowWidth*0.75, _windowHeight*0.2);
+    textSize(20);
+    text('naciśnij LPM - szkicowanie', _windowWidth*0.25, _windowHeight*0.3);
+    text('puść LPM - budowanie', _windowWidth*0.25, _windowHeight*0.35);
+    text('spacja - pauza', _windowWidth*0.25, _windowHeight*0.4);
+    text('h - pomoc', _windowWidth*0.25, _windowHeight*0.45);
+
+
+    text('lewo, prawo, góra, dół - pchnięcie bloczka', _windowWidth*0.75, _windowHeight*0.3);
+    text('pauza - pauza', _windowWidth*0.75, _windowHeight*0.35);
+    text('graj - wznowienie gry', _windowWidth*0.75, _windowHeight*0.4);
+    text('następne - następny poziom', _windowWidth*0.75, _windowHeight*0.45);
+    text('pomoc - menu z komendami', _windowWidth*0.75, _windowHeight*0.5);
+
     pop();
   }
 }
