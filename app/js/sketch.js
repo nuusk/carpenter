@@ -92,6 +92,9 @@ function Carpenter(name) {
   this.sketchingTimer = 1000
   this.canSketch = true;
 
+  //display error text when carpenter tries to build block with invalid size
+  this.invalidSizeError = false;
+
   this.minSketchSize = 1000;
   this.maxSketchSize = 40000;
   this.maxWidth = 300;
@@ -136,6 +139,10 @@ function Carpenter(name) {
         ));
         carpenterBlock = null;
       } else {
+        this.invalidSizeError = true;
+        setTimeout(()=>{
+          this.invalidSizeError = false;
+        }, 2000)
         carpenterBlock = null;
         return;
       }
@@ -259,6 +266,14 @@ function draw() {
     textAlign(LEFT);
     if (!carpenter.canSketch) {
       text("sketching cooldown", 10, 20);
+    }
+    if (carpenter.invalidSizeError) {
+      push();
+      textAlign(CENTER);
+      fill(color(140+70*Math.sin(0.02*millis())));
+      textSize(50);
+      text('ZŁY ROZMIAR BLOCZKA', _windowWidth*0.5, _windowHeight*0.1);
+      pop();
     }
 
     //if carpenter is sketching
