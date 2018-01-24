@@ -66,20 +66,30 @@ function Narrator(name) {
       pause = false;
       help = false;
     } else if (this.commands.help.has(command)) {
+      pause = true;
       help = true;
+    } else if (this.commands.reset.has(command)) {
+      resetStage();
+    } else if (this.commands.kurwa.has(command)) {
+      kurwa = true;
+    } else if (this.commands.sorry.has(command)) {
+      kurwa = false;
     }
   }
 
   //these are the input values (the words you say to move objects on the screen)
   this.commands = {
-    left: new Set(["lewo", "zlewo", "lewa", "lego"]),
+    left: new Set(["lewo", "zlewo", "lewa", "LEGO"]),
     right: new Set(["prawo", "rawo", "wrawo"]),
     up: new Set(["góra", "tura"]),
     down: new Set(["dół", "du", "do"]),
     next: new Set(["następne", "następna", "następnie", "następny"]),
     pause: new Set(["pauza", "pauzuj"]),
     resume: new Set(["wznów", "graj", "start"]),
-    help: new Set(["pomóż", "pomoc", "pomocy", "pomożesz"])
+    help: new Set(["pomóż", "pomoc", "pomocy", "pomożesz"]),
+    reset: new Set(["reset", "nowa", "nowo", "resetuj", "resety", "czyść", "wyczyść"]),
+    kurwa: new Set(["kurwa"]),
+    sorry: new Set(["sorry", "przepraszam", "wybacz"])
   }
 }
 
@@ -230,6 +240,12 @@ function setup() {
   // blocks[0].color=colors.white;
 }
 
+function resetStage() {
+  stages[stageNumber] = [];
+  blocks = [];
+  initStage();
+}
+
 function initStage() {
   stages[0].push(new Block( 1, _windowWidth, _windowHeight*0.1, createVector(0, _windowHeight*0.9), colors.white, true ));
   stages[0].push(new Block( 1, _windowWidth*0.05, _windowHeight*0.5, createVector(0, _windowHeight*0.5), colors.white, true ));
@@ -256,6 +272,8 @@ function initStage() {
 
 let pause = false;
 let help = false;
+let kurwa = false;
+let sorry = false;
 
 function draw() {
   if (!pause) {
@@ -338,9 +356,23 @@ function draw() {
     text('lewo, prawo, góra, dół - pchnięcie bloczka', _windowWidth*0.75, _windowHeight*0.3);
     text('pauza - pauza', _windowWidth*0.75, _windowHeight*0.35);
     text('graj - wznowienie gry', _windowWidth*0.75, _windowHeight*0.4);
-    text('następne - następny poziom', _windowWidth*0.75, _windowHeight*0.45);
+    // text('następne - następny poziom', _windowWidth*0.75, _windowHeight*0.45);
     text('pomoc - menu z komendami', _windowWidth*0.75, _windowHeight*0.5);
+    text('reset - wyczyść aktualną scenę,', _windowWidth*0.75, _windowHeight*0.55);
 
+    pop();
+  } if (kurwa) {
+    push();
+    background(color(100+(random(frame)/frame)*100, (random(frame)/frame)*100, 30+(random(frame)/frame)*100));
+    textAlign(CENTER);
+    fill(color(140+70*Math.sin(0.005*millis())));
+    textSize(100+random(frame)%200);
+    text('KURWA KURWA', _windowWidth*0.5, _windowHeight*0.0+50);
+    text('KURWA KURWA', _windowWidth*0.5, _windowHeight*0.25+50);
+    text('KURWA KURWA', _windowWidth*0.5, _windowHeight*0.5+50);
+    text('KURWA KURWA', _windowWidth*0.5, _windowHeight*0.75+50);
+    text('KURWA KURWA', _windowWidth*0.5, _windowHeight*1+50);
+    textSize(46);
     pop();
   }
 }
