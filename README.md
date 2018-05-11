@@ -2,6 +2,9 @@
 
 Build blocks and move it with your voice, so they fall in the right place!
 
+![](/screenshot.png?raw=true "Carpenter Gameplay Image")
+
+
 ## Getting started
 
 Download the repo or clone it to your local disk with
